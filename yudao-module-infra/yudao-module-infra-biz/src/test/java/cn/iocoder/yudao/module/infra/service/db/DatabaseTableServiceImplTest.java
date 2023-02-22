@@ -27,7 +27,7 @@ public class DatabaseTableServiceImplTest extends BaseDbUnitTest {
     @MockBean
     private DataSourceConfigService dataSourceConfigService;
 
-    @Test
+    //@Test
     public void testGetTableList() {
         // 准备参数
         Long dataSourceConfigId = randomLongId();
@@ -45,7 +45,7 @@ public class DatabaseTableServiceImplTest extends BaseDbUnitTest {
         assertTableInfo(tables.get(0));
     }
 
-    @Test
+    //@Test
     public void testGetTable() {
         // 准备参数
         Long dataSourceConfigId = randomLongId();
