@@ -139,4 +139,40 @@ public class CodegenColumnDO extends BaseDO {
      */
     private String htmlType;
 
+    /**
+     * 字段类型：0：数据库字段；1：子业务对象；
+     */
+    private String columnType;
+    /**
+     * 子业务对象ID
+     */
+    private Long subTableId;
+
+    /**
+     * 搜索帮助类型
+     */
+    private String searchType;
+
+    /**
+     * 列中展示宽度
+     */
+    private Integer wide;
+    /**
+     * 表单中展示的行位置
+     */
+    private Integer rowIdx;
+    /**
+     * 表单中展示的列位置
+     */
+    private Integer colIdx;
+    /**
+     * 字段长度
+     */
+    private Integer size;
+
+    /**
+     * 列表中排序
+     */
+    private Integer gridIdx;
+
 }

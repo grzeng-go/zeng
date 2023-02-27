@@ -81,4 +81,29 @@ public class CodegenColumnBaseVO {
     @NotNull(message = "显示类型不能为空")
     private String htmlType;
 
+    @Schema(description = "字段类型：0：数据库字段；1：子业务对象；", required = true, example = "1")
+    @NotNull(message = "字段类型：0：数据库字段；1：子业务对象；不能为空")
+    private String columnType;
+
+    @Schema(description = "子业务对象名称", example = "13982")
+    private Long subTableId;
+
+    @Schema(description = "搜索帮助类型", example = "1")
+    private String searchType;
+
+    @Schema(description = "列中展示宽度")
+    private Integer wide;
+
+    @Schema(description = "表单中展示的行位置")
+    private Integer rowIdx;
+
+    @Schema(description = "表单中展示的列位置")
+    private Integer colIdx;
+
+    @Schema(description = "字段长度")
+    private Integer size;
+
+    @Schema(description = "列表中排序")
+    private Integer gridIdx;
+
 }

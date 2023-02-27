@@ -23,6 +23,7 @@
         <servlet.versoin>2.5</servlet.versoin>
         <!-- DB 相关 -->
         <druid.version>1.2.15</druid.version>
+        <mybatis-plus-join.version>1.4.2.2</mybatis-plus-join.version>
         <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
         <mybatis-plus-generator.version>3.5.3.1</mybatis-plus-generator.version>
         <dynamic-datasource.version>3.6.1</dynamic-datasource.version>
@@ -192,6 +193,13 @@
                 <groupId>com.alibaba</groupId>
                 <artifactId>druid-spring-boot-starter</artifactId>
                 <version>${druid.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.github.yulichang/mybatis-plus-join -->
+            <!-- 基于mybatis-plus的级联查询库 -->
+            <dependency>
+                <groupId>com.github.yulichang</groupId>
+                <artifactId>mybatis-plus-join</artifactId>
+                <version>${mybatis-plus-join.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.baomidou</groupId>

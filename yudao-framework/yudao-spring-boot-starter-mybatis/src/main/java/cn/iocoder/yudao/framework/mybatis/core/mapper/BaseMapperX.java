@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.github.yulichang.base.MPJBaseMapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Collection;
@@ -18,7 +19,7 @@ import java.util.List;
 /**
  * 在 MyBatis Plus 的 BaseMapper 的基础上拓展，提供更多的能力
  */
-public interface BaseMapperX<T> extends BaseMapper<T> {
+public interface BaseMapperX<T> extends MPJBaseMapper<T> {
 
     default PageResult<T> selectPage(PageParam pageParam, @Param("ew") Wrapper<T> queryWrapper) {
         // MyBatis Plus 查询

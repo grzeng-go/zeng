@@ -46,8 +46,12 @@ public interface CodegenConvert {
             @Mapping(source = "keyIdentityFlag", target = "autoIncrement"),
             @Mapping(source = "columnType.type", target = "javaType"),
             @Mapping(source = "propertyName", target = "javaField"),
+            @Mapping(target = "columnType", ignore = true),
+            @Mapping(source = "metaInfo.length", target = "size"),
     })
     CodegenColumnDO convert(TableField bean);
+
+    CodegenColumnRespVO convert(CodegenColumnDO columnDO);
 
     @Named("getDataType")
     default String getDataType(JdbcType jdbcType) {

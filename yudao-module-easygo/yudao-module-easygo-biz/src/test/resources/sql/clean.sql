@@ -1,0 +1,1 @@
+DELETE FROM "easygo_business_object";

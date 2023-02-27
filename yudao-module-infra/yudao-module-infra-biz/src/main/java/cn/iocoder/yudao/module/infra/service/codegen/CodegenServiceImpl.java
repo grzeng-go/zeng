@@ -4,8 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
+import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.CodegenCreateListReqVO;
 import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.CodegenUpdateReqVO;
+import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.column.CodegenColumnRespVO;
 import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.table.CodegenTablePageReqVO;
 import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.table.DatabaseTableRespVO;
 import cn.iocoder.yudao.module.infra.convert.codegen.CodegenConvert;
@@ -18,8 +20,10 @@ import cn.iocoder.yudao.module.infra.service.codegen.inner.CodegenBuilder;
 import cn.iocoder.yudao.module.infra.service.codegen.inner.CodegenEngine;
 import cn.iocoder.yudao.module.infra.service.db.DatabaseTableService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.generator.config.po.TableField;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -230,8 +234,30 @@ public class CodegenServiceImpl implements CodegenService {
             throw exception(CODEGEN_COLUMN_NOT_EXISTS);
         }
 
+        List<CodegenColumnRespVO> columnRespVOList = CodegenConvert.INSTANCE.convertList02(columns);
+        // 处理子业务对象
+        columnRespVOList.stream().filter(vo -> StringUtils.equals("1", vo.getColumnType()))
+                .forEach(vo -> {
+                    LambdaQueryWrapper<CodegenColumnDO> queryWrapper = new LambdaQueryWrapperX<CodegenColumnDO>()
+                            .eqIfPresent(CodegenColumnDO::getTableId, vo.getTableId())
+                            .eqIfPresent(CodegenColumnDO::getListOperation, true)
+                            .orderByAsc(CodegenColumnDO::getGridIdx);
+                    List<CodegenColumnDO> codegenColumnDOS = codegenColumnMapper.selectList(queryWrapper);
+                    if (codegenColumnDOS.isEmpty()) {
+                        throw exception(CODEGEN_COLUMN_NOT_EXISTS);
+                    }
+                    vo.setSubColumns(CodegenConvert.INSTANCE.convertList02(codegenColumnDOS));
+
+                    CodegenColumnDO primaryKeyColumn = codegenColumnMapper.selectOne(new LambdaQueryWrapperX<CodegenColumnDO>()
+                            .eqIfPresent(CodegenColumnDO::getTableId, vo.getTableId())
+                            .eqIfPresent(CodegenColumnDO::getPrimaryKey, true));
+                    if (primaryKeyColumn != null) {
+                        vo.setSubPrimaryKeyColumn(CodegenConvert.INSTANCE.convert(primaryKeyColumn));
+                    }
+                });
+
         // 执行生成
-        return codegenEngine.execute(table, columns);
+        return codegenEngine.execute(table, columnRespVOList);
     }
 
     @Override

@@ -53,4 +53,10 @@ public class CodegenTableBaseVO {
     @Schema(description = "父菜单编号", example = "1024")
     private Long parentMenuId;
 
+    @Schema(description = "数据来源")
+    private String datasource;
+
+    @Schema(description = "关联流程定义", example = "19339")
+    private String processId;
+
 }

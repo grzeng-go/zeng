@@ -107,4 +107,13 @@ public class CodegenTableDO extends BaseDO {
      */
     private Long parentMenuId;
 
+    /**
+     * 数据来源
+     */
+    private String datasource;
+    /**
+     * 关联流程定义
+     */
+    private String processId;
+
 }

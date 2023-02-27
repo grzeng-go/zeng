@@ -20,7 +20,7 @@ import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.operatelog.core.annotations.OperateLog;
 import cn.iocoder.yudao.framework.operatelog.core.enums.OperateTypeEnum;
-import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenColumnDO;
+import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.column.CodegenColumnRespVO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenTableDO;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenSceneEnum;
 import cn.iocoder.yudao.module.infra.framework.codegen.config.CodegenProperties;
@@ -142,12 +142,12 @@ public class CodegenEngine {
         globalBindingMap.put("OperateTypeEnumClassName", OperateTypeEnum.class.getName());
     }
 
-    public Map<String, String> execute(CodegenTableDO table, List<CodegenColumnDO> columns) {
+    public Map<String, String> execute(CodegenTableDO table, List<CodegenColumnRespVO> columns) {
         // 创建 bindingMap
         Map<String, Object> bindingMap = new HashMap<>(globalBindingMap);
         bindingMap.put("table", table);
         bindingMap.put("columns", columns);
-        bindingMap.put("primaryColumn", CollectionUtils.findFirst(columns, CodegenColumnDO::getPrimaryKey)); // 主键字段
+        bindingMap.put("primaryColumn", CollectionUtils.findFirst(columns, CodegenColumnRespVO::getPrimaryKey)); // 主键字段
         bindingMap.put("sceneEnum", CodegenSceneEnum.valueOf(table.getScene()));
 
         // className 相关
@@ -190,6 +190,10 @@ public class CodegenEngine {
     }
 
     private static String javaTemplatePath(String path) {
+        return "codegen/java/" + path + ".vm";
+    }
+
+    private static String myJavaTemplatePath(String path) {
         return "codegen/java/" + path + ".vm";
     }
 

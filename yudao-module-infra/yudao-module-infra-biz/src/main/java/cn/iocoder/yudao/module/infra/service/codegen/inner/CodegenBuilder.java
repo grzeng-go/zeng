@@ -131,6 +131,8 @@ public class CodegenBuilder {
             processColumnOperation(column); // 处理 CRUD 相关的字段的默认值
             processColumnUI(column); // 处理 UI 相关的字段的默认值
             processColumnExample(column); // 处理字段的 swagger example 示例
+
+            column.setColumnType("0");
         }
         return columns;
     }

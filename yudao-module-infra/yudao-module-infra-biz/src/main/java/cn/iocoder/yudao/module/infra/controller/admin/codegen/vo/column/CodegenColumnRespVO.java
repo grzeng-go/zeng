@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "管理后台 - 代码生成字段定义 Response VO")
 @Data
@@ -18,5 +19,11 @@ public class CodegenColumnRespVO extends CodegenColumnBaseVO {
 
     @Schema(description = "创建时间", required = true)
     private LocalDateTime createTime;
+
+    @Schema(description = "子业务对象要展示的字段", required = true)
+    private List<CodegenColumnRespVO> subColumns;
+
+    @Schema(description = "子业务对象主键字段名", example = "13982")
+    private CodegenColumnRespVO subPrimaryKeyColumn;
 
 }

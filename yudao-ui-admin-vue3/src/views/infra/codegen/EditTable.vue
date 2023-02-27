@@ -1,25 +1,44 @@
 <template>
-  <ContentWrap>
-    <ContentDetailWrap :title="title" @back="push('/infra/codegen')">
-      <el-tabs v-model="activeName">
-        <el-tab-pane label="基本信息" name="basicInfo">
-          <BasicInfoForm ref="basicInfoRef" :basicInfo="tableCurrentRow" />
-        </el-tab-pane>
-        <el-tab-pane label="字段信息" name="cloum">
-          <CloumInfoForm ref="cloumInfoRef" :info="cloumCurrentRow" />
-        </el-tab-pane>
-      </el-tabs>
-      <template #right>
-        <XButton
-          type="primary"
-          :title="t('action.save')"
-          :loading="loading"
-          @click="submitForm()"
-        />
-      </template>
-    </ContentDetailWrap>
-  </ContentWrap>
+  <el-row>
+    <el-col>
+      <el-card class="box-card">
+        <template #header>
+          <div class="card-header">
+            <span>基本信息</span>
+          </div>
+        </template>
+        <BasicInfoForm ref="basicInfoRef" :basicInfo="tableCurrentRow" />
+      </el-card>
+    </el-col>
+  </el-row>
+  <el-row>
+    <el-col>
+      <el-card class="box-card">
+        <el-tabs>
+          <el-tab-pane label="字段信息">
+            <el-scrollbar>
+              <CloumInfoForm ref="cloumInfoRef" :info="cloumCurrentRow" />
+            </el-scrollbar>
+          </el-tab-pane>
+        </el-tabs>
+      </el-card>
+    </el-col>
+  </el-row>
+  <el-row>
+    <el-col>
+      <el-button
+        style="float: right"
+        class="right"
+        type="primary"
+        :title="t('action.save')"
+        :loading="loading"
+        @click="submitForm()"
+        >保存</el-button
+      >
+    </el-col>
+  </el-row>
 </template>
+
 <script setup lang="ts">
 import { BasicInfoForm, CloumInfoForm } from './components'
 import { getCodegenTableApi, updateCodegenTableApi } from '@/api/infra/codegen'
@@ -31,7 +50,7 @@ const { push } = useRouter()
 const { query } = useRoute()
 const loading = ref(false)
 const title = ref('代码生成')
-const activeName = ref('basicInfo')
+//const activeName = ref('basicInfo')
 const cloumInfoRef = ref(null)
 const tableCurrentRow = ref<CodegenTableVO>()
 const cloumCurrentRow = ref<CodegenColumnVO[]>([])
@@ -58,10 +77,22 @@ const submitForm = async () => {
     }
     await updateCodegenTableApi(genTable)
     message.success(t('common.updateSuccess'))
-    push('/infra/codegen')
+    await push('/infra/codegen')
   }
 }
 onMounted(() => {
   getList()
 })
 </script>
+
+<style lang="scss">
+.el-row {
+  margin-bottom: 10px;
+}
+.el-row:last-child {
+  margin-bottom: 0;
+}
+.el-col {
+  border-radius: 4px;
+}
+</style>
