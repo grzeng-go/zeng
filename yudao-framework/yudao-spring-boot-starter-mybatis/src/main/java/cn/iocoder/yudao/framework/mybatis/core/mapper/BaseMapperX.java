@@ -6,9 +6,9 @@ import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.github.yulichang.base.MPJBaseMapper;
 import org.apache.ibatis.annotations.Param;
@@ -106,6 +106,23 @@ public interface BaseMapperX<T> extends MPJBaseMapper<T> {
 
     default void updateBatch(Collection<T> entities, int size) {
         Db.updateBatchById(entities, size);
+    }
+
+    /**
+     * 批量保存或更新
+     * @param entities
+     */
+    default void saveOrUpdateBatch(Collection<T> entities) {
+        saveOrUpdateBatch(entities, IService.DEFAULT_BATCH_SIZE);
+    }
+
+    /**
+     * 批量保存或更新
+     * @param entities
+     * @param size
+     */
+    default void saveOrUpdateBatch(Collection<T> entities, int size) {
+        Db.saveOrUpdateBatch(entities, size);
     }
 
 }
