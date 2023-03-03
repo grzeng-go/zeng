@@ -9,6 +9,7 @@ import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.CodegenCreateLi
 import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.CodegenUpdateReqVO;
 import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.column.CodegenColumnRespVO;
 import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.table.CodegenTablePageReqVO;
+import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.table.CodegenTableRespVO;
 import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.table.DatabaseTableRespVO;
 import cn.iocoder.yudao.module.infra.convert.codegen.CodegenConvert;
 import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenColumnDO;
@@ -28,13 +29,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
+import static cn.hutool.core.text.CharSequenceUtil.lowerFirst;
+import static cn.hutool.core.text.CharSequenceUtil.upperFirst;
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.infra.enums.ErrorCodeConstants.*;
 
@@ -82,8 +82,7 @@ public class CodegenServiceImpl implements CodegenService {
         // 校验导入的表和字段非空
         validateTableInfo(tableInfo);
         // 校验是否已经存在
-        if (codegenTableMapper.selectByTableNameAndDataSourceConfigId(tableInfo.getName(),
-                dataSourceConfigId) != null) {
+        if (codegenTableMapper.selectByTableNameAndDataSourceConfigId(tableInfo.getName(), dataSourceConfigId) != null) {
             throw exception(CODEGEN_TABLE_EXISTS);
         }
 
@@ -161,23 +160,13 @@ public class CodegenServiceImpl implements CodegenService {
         Set<String> codegenColumnNames = CollectionUtils.convertSet(codegenColumns, CodegenColumnDO::getColumnName);
 
         //计算需要修改的字段，插入时重新插入，删除时将原来的删除
-        BiPredicate<TableField, CodegenColumnDO> pr =
-                (tableField, codegenColumn) -> tableField.getMetaInfo().getJdbcType().name().equals(codegenColumn.getDataType())
-                        && tableField.getMetaInfo().isNullable() == codegenColumn.getNullable()
-                        && tableField.isKeyFlag() == codegenColumn.getPrimaryKey()
-                        && tableField.getComment().equals(codegenColumn.getColumnComment());
+        BiPredicate<TableField, CodegenColumnDO> pr = (tableField, codegenColumn) -> tableField.getMetaInfo().getJdbcType().name().equals(codegenColumn.getDataType()) && tableField.getMetaInfo().isNullable() == codegenColumn.getNullable() && tableField.isKeyFlag() == codegenColumn.getPrimaryKey() && tableField.getComment().equals(codegenColumn.getColumnComment());
         Map<String, CodegenColumnDO> codegenColumnDOMap = CollectionUtils.convertMap(codegenColumns, CodegenColumnDO::getColumnName);
         //需要修改的字段
-        Set<String> modifyFieldNames = tableFields.stream()
-                .filter(tableField -> codegenColumnDOMap.get(tableField.getColumnName()) != null
-                        && !pr.test(tableField, codegenColumnDOMap.get(tableField.getColumnName())))
-                .map(TableField::getColumnName)
-                .collect(Collectors.toSet());
+        Set<String> modifyFieldNames = tableFields.stream().filter(tableField -> codegenColumnDOMap.get(tableField.getColumnName()) != null && !pr.test(tableField, codegenColumnDOMap.get(tableField.getColumnName()))).map(TableField::getColumnName).collect(Collectors.toSet());
         // 计算需要删除的字段
         Set<String> tableFieldNames = CollectionUtils.convertSet(tableFields, TableField::getName);
-        Set<Long> deleteColumnIds = codegenColumns.stream()
-                .filter(column -> (!tableFieldNames.contains(column.getColumnName())) || modifyFieldNames.contains(column.getColumnName()))
-                .map(CodegenColumnDO::getId).collect(Collectors.toSet());
+        Set<Long> deleteColumnIds = codegenColumns.stream().filter(column -> (!tableFieldNames.contains(column.getColumnName())) || modifyFieldNames.contains(column.getColumnName())).map(CodegenColumnDO::getId).collect(Collectors.toSet());
         // 移除已经存在的字段
         tableFields.removeIf(column -> codegenColumnNames.contains(column.getColumnName()) && (!modifyFieldNames.contains(column.getColumnName())));
         if (CollUtil.isEmpty(tableFields) && CollUtil.isEmpty(deleteColumnIds)) {
@@ -229,35 +218,70 @@ public class CodegenServiceImpl implements CodegenService {
         if (table == null) {
             throw exception(CODEGEN_TABLE_NOT_EXISTS);
         }
-        List<CodegenColumnDO> columns = codegenColumnMapper.selectListByTableId(tableId);
+        CodegenTableRespVO tableRespVO = CodegenConvert.INSTANCE.convert(table);
+        return generationCodes(tableRespVO);
+    }
+
+    public Map<String, String> generationCodes(CodegenTableRespVO table) {
+
+        List<CodegenColumnDO> columns = codegenColumnMapper.selectListByTableId(table.getId());
         if (CollUtil.isEmpty(columns)) {
             throw exception(CODEGEN_COLUMN_NOT_EXISTS);
         }
 
-        List<CodegenColumnRespVO> columnRespVOList = CodegenConvert.INSTANCE.convertList02(columns);
-        // 处理子业务对象
-        columnRespVOList.stream().filter(vo -> StringUtils.equals("1", vo.getColumnType()))
-                .forEach(vo -> {
-                    LambdaQueryWrapper<CodegenColumnDO> queryWrapper = new LambdaQueryWrapperX<CodegenColumnDO>()
-                            .eqIfPresent(CodegenColumnDO::getTableId, vo.getTableId())
-                            .eqIfPresent(CodegenColumnDO::getListOperation, true)
-                            .orderByAsc(CodegenColumnDO::getGridIdx);
-                    List<CodegenColumnDO> codegenColumnDOS = codegenColumnMapper.selectList(queryWrapper);
-                    if (codegenColumnDOS.isEmpty()) {
-                        throw exception(CODEGEN_COLUMN_NOT_EXISTS);
-                    }
-                    vo.setSubColumns(CodegenConvert.INSTANCE.convertList02(codegenColumnDOS));
+        Map<String, String> result = new HashMap<>();
 
-                    CodegenColumnDO primaryKeyColumn = codegenColumnMapper.selectOne(new LambdaQueryWrapperX<CodegenColumnDO>()
-                            .eqIfPresent(CodegenColumnDO::getTableId, vo.getTableId())
-                            .eqIfPresent(CodegenColumnDO::getPrimaryKey, true));
-                    if (primaryKeyColumn != null) {
-                        vo.setSubPrimaryKeyColumn(CodegenConvert.INSTANCE.convert(primaryKeyColumn));
-                    }
-                });
+        List<CodegenColumnRespVO> columnRespVOList = CodegenConvert.INSTANCE.convertList02(columns);
+
+        // 主键
+        CodegenColumnRespVO primaryKey = CollectionUtils.findFirst(columnRespVOList, CodegenColumnRespVO::getPrimaryKey);
+        // 处理子业务对象
+        columnRespVOList.stream().filter(vo -> StringUtils.equals("1", vo.getColumnType())).forEach(vo -> {
+            // 子业务对象，直接在_column.vm中创建属性
+            vo.setCreateOperation(true).setUpdateOperation(true).setListOperationResult(true);
+            // 校验是否已经存在
+            CodegenTableDO subTable = codegenTableMapper.selectById(vo.getSubTableId());
+            if (subTable == null) {
+                throw exception(CODEGEN_TABLE_NOT_EXISTS);
+            }
+
+            LambdaQueryWrapper<CodegenColumnDO> queryWrapper = new LambdaQueryWrapperX<CodegenColumnDO>()
+                    .eqIfPresent(CodegenColumnDO::getTableId, vo.getTableId())
+                    .and(i -> i.eq(CodegenColumnDO::getListOperation, true).or(w -> w.eq(CodegenColumnDO::getPrimaryKey, true)))
+                    .orderByAsc(CodegenColumnDO::getGridIdx);
+            List<CodegenColumnDO> codegenColumnDOS = codegenColumnMapper.selectList(queryWrapper);
+            if (codegenColumnDOS.isEmpty()) {
+                throw exception(CODEGEN_COLUMN_NOT_EXISTS);
+            }
+            vo.setSubColumns(CodegenConvert.INSTANCE.convertList02(codegenColumnDOS));
+
+            vo.setUpParentId(upperFirst(vo.getParentId())).setUpJavaField(upperFirst(vo.getJavaField())).setClassName(subTable.getClassName()).setLowClassName(lowerFirst(subTable.getClassName()));
+
+            CodegenColumnDO primaryKeyColumn = codegenColumnMapper.selectOne(new LambdaQueryWrapperX<CodegenColumnDO>().eqIfPresent(CodegenColumnDO::getTableId, vo.getTableId()).eqIfPresent(CodegenColumnDO::getPrimaryKey, true));
+            if (primaryKeyColumn != null) {
+                vo.setSubPrimaryKeyColumn(CodegenConvert.INSTANCE.convert(primaryKeyColumn));
+            }
+
+            CodegenTableRespVO subTableVo = CodegenConvert.INSTANCE.convert(subTable);
+            subTableVo.setParentId(vo.getParentId())
+                    .setUpParentId(upperFirst(vo.getParentId()))
+                    .setSubTable(true)
+                    .setParentClassName(table.getClassName())
+                    .setLowParentClassName(lowerFirst(table.getClassName()))
+                    .setParentJavaType(primaryKey.getJavaType());
+
+            vo.setSubModuleName(subTableVo.getModuleName())
+                    .setSubSceneEnum(CodegenSceneEnum.valueOf(subTableVo.getScene()))
+                    .setSubBusinessName(subTableVo.getBusinessName());
+
+            // 生成子业务对象代码
+            result.putAll(generationCodes(subTableVo));
+        });
 
         // 执行生成
-        return codegenEngine.execute(table, columnRespVOList);
+        result.putAll(codegenEngine.execute(table, columnRespVOList));
+
+        return result;
     }
 
     @Override
@@ -265,8 +289,7 @@ public class CodegenServiceImpl implements CodegenService {
         List<TableInfo> tables = databaseTableService.getTableList(dataSourceConfigId, name, comment);
         // 移除已经生成的表
         // 移除在 Codegen 中，已经存在的
-        Set<String> existsTables = CollectionUtils.convertSet(
-                codegenTableMapper.selectListByDataSourceConfigId(dataSourceConfigId), CodegenTableDO::getTableName);
+        Set<String> existsTables = CollectionUtils.convertSet(codegenTableMapper.selectListByDataSourceConfigId(dataSourceConfigId), CodegenTableDO::getTableName);
         tables.removeIf(table -> existsTables.contains(table.getName()));
         return CodegenConvert.INSTANCE.convertList04(tables);
     }

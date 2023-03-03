@@ -10,6 +10,9 @@ import java.math.BigDecimal;
 #if (${column.javaType} == "LocalDateTime")
 import java.time.LocalDateTime;
 #end
+#if (${column.columnType} == "1" )## 子业务对象
+import ${basePackage}.module.${column.subModuleName}.controller.${column.subSceneEnum.basePackage}.${column.subBusinessName}.vo.${column.className}CreateReqVO;
+#end
 #end
 import javax.validation.constraints.*;
 ## 处理 Date 字段的引入
@@ -31,9 +34,12 @@ import static ${DateUtilsClassName}.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 public class ${sceneEnum.prefixClass}${table.className}BaseVO {
 
 #foreach ($column in $columns)
-#if (${column.createOperation} && ${column.updateOperation} && ${column.listOperationResult})##通用操作
-    #parse("codegen/java/controller/vo/_column.vm")
-
+#if (${column.createOperation} && ${column.updateOperation} && ${column.listOperationResult} && ${column.columnType} == "0")##通用操作
+    #parse("codegen/easygo_java/controller/vo/_column.vm")
+#end
+#if (${column.columnType} == "1" )## 子业务对象
+    @Schema(description = "${column.columnComment}"#if (!${column.nullable}), required = true#end#if ("$!column.example" != ""), example = "${column.example}"#end)
+    private List<${column.className}CreateReqVO> ${column.javaField};
 #end
 #end
 }

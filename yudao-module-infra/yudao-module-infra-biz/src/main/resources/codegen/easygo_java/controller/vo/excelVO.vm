@@ -31,7 +31,7 @@ import ${DictConvertClassName};
 public class ${sceneEnum.prefixClass}${table.className}ExcelVO {
 
 #foreach ($column in $columns)
-    #if (${column.listOperationResult})##返回字段
+    #if (${column.listOperationResult} && ${column.columnType} != "1")##返回字段，并且不为子业务对象
     #if ("$!column.dictType" != "")##处理枚举值
     @ExcelProperty(value = "${column.columnComment}", converter = DictConvert.class)
     @DictFormat("${column.dictType}") // TODO 代码优化：建议设置到对应的 XXXDictTypeConstants 枚举类中

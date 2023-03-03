@@ -85,8 +85,11 @@ public class CodegenColumnBaseVO {
     @NotNull(message = "字段类型：0：数据库字段；1：子业务对象；不能为空")
     private String columnType;
 
-    @Schema(description = "子业务对象名称", example = "13982")
+    @Schema(description = "子业务对象对应的tableId", example = "13982")
     private Long subTableId;
+
+    @Schema(description = "子业务对象管理主表的字段名", example = "boId")
+    private String parentId;
 
     @Schema(description = "搜索帮助类型", example = "1")
     private String searchType;

@@ -21,7 +21,7 @@ import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.operatelog.core.annotations.OperateLog;
 import cn.iocoder.yudao.framework.operatelog.core.enums.OperateTypeEnum;
 import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.column.CodegenColumnRespVO;
-import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenTableDO;
+import cn.iocoder.yudao.module.infra.controller.admin.codegen.vo.table.CodegenTableRespVO;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenSceneEnum;
 import cn.iocoder.yudao.module.infra.framework.codegen.config.CodegenProperties;
 import com.google.common.collect.Maps;
@@ -55,35 +55,58 @@ public class CodegenEngine {
      */
     private static final Map<String, String> TEMPLATES = MapUtil.<String, String>builder(new LinkedHashMap<>()) // 有序
             // Java module-biz Main
-            .put(javaTemplatePath("controller/vo/baseVO"), javaModuleImplVOFilePath("BaseVO"))
-            .put(javaTemplatePath("controller/vo/createReqVO"), javaModuleImplVOFilePath("CreateReqVO"))
-            .put(javaTemplatePath("controller/vo/pageReqVO"), javaModuleImplVOFilePath("PageReqVO"))
-            .put(javaTemplatePath("controller/vo/respVO"), javaModuleImplVOFilePath("RespVO"))
-            .put(javaTemplatePath("controller/vo/updateReqVO"), javaModuleImplVOFilePath("UpdateReqVO"))
-            .put(javaTemplatePath("controller/vo/exportReqVO"), javaModuleImplVOFilePath("ExportReqVO"))
-            .put(javaTemplatePath("controller/vo/excelVO"), javaModuleImplVOFilePath("ExcelVO"))
-            .put(javaTemplatePath("controller/controller"), javaModuleImplControllerFilePath())
-            .put(javaTemplatePath("convert/convert"),
-                    javaModuleImplMainFilePath("convert/${table.businessName}/${table.className}Convert"))
-            .put(javaTemplatePath("dal/do"),
-                    javaModuleImplMainFilePath("dal/dataobject/${table.businessName}/${table.className}DO"))
-            .put(javaTemplatePath("dal/mapper"),
-                    javaModuleImplMainFilePath("dal/mysql/${table.businessName}/${table.className}Mapper"))
-            .put(javaTemplatePath("dal/mapper.xml"), mapperXmlFilePath())
-            .put(javaTemplatePath("service/serviceImpl"),
-                    javaModuleImplMainFilePath("service/${table.businessName}/${table.className}ServiceImpl"))
-            .put(javaTemplatePath("service/service"),
-                    javaModuleImplMainFilePath("service/${table.businessName}/${table.className}Service"))
+//            .put(javaTemplatePath("controller/vo/baseVO"), javaModuleImplVOFilePath("BaseVO"))
+//            .put(javaTemplatePath("controller/vo/createReqVO"), javaModuleImplVOFilePath("CreateReqVO"))
+//            .put(javaTemplatePath("controller/vo/pageReqVO"), javaModuleImplVOFilePath("PageReqVO"))
+//            .put(javaTemplatePath("controller/vo/respVO"), javaModuleImplVOFilePath("RespVO"))
+//            .put(javaTemplatePath("controller/vo/updateReqVO"), javaModuleImplVOFilePath("UpdateReqVO"))
+//            .put(javaTemplatePath("controller/vo/exportReqVO"), javaModuleImplVOFilePath("ExportReqVO"))
+//            .put(javaTemplatePath("controller/vo/excelVO"), javaModuleImplVOFilePath("ExcelVO"))
+//            .put(javaTemplatePath("controller/controller"), javaModuleImplControllerFilePath())
+//            .put(javaTemplatePath("convert/convert"),
+//                    javaModuleImplMainFilePath("convert/${table.businessName}/${table.className}Convert"))
+//            .put(javaTemplatePath("dal/do"),
+//                    javaModuleImplMainFilePath("dal/dataobject/${table.businessName}/${table.className}DO"))
+//            .put(javaTemplatePath("dal/mapper"),
+//                    javaModuleImplMainFilePath("dal/mysql/${table.businessName}/${table.className}Mapper"))
+//            .put(javaTemplatePath("dal/mapper.xml"), mapperXmlFilePath())
+//            .put(javaTemplatePath("service/serviceImpl"),
+//                    javaModuleImplMainFilePath("service/${table.businessName}/${table.className}ServiceImpl"))
+//            .put(javaTemplatePath("service/service"),
+//                    javaModuleImplMainFilePath("service/${table.businessName}/${table.className}Service"))
             // Java module-biz Test
-            .put(javaTemplatePath("test/serviceTest"),
+//            .put(javaTemplatePath("test/serviceTest"),
+//                    javaModuleImplTestFilePath("service/${table.businessName}/${table.className}ServiceImplTest"))
+            // easygo Java module-biz Main
+            .put(easygoJavaTemplatePath("controller/vo/baseVO"), javaModuleImplVOFilePath("BaseVO"))
+            .put(easygoJavaTemplatePath("controller/vo/createReqVO"), javaModuleImplVOFilePath("CreateReqVO"))
+            .put(easygoJavaTemplatePath("controller/vo/pageReqVO"), javaModuleImplVOFilePath("PageReqVO"))
+            .put(easygoJavaTemplatePath("controller/vo/respVO"), javaModuleImplVOFilePath("RespVO"))
+            .put(easygoJavaTemplatePath("controller/vo/updateReqVO"), javaModuleImplVOFilePath("UpdateReqVO"))
+            .put(easygoJavaTemplatePath("controller/vo/exportReqVO"), javaModuleImplVOFilePath("ExportReqVO"))
+            .put(easygoJavaTemplatePath("controller/vo/excelVO"), javaModuleImplVOFilePath("ExcelVO"))
+            .put(easygoJavaTemplatePath("controller/controller"), javaModuleImplControllerFilePath())
+            .put(easygoJavaTemplatePath("convert/convert"),
+                    javaModuleImplMainFilePath("convert/${table.businessName}/${table.className}Convert"))
+            .put(easygoJavaTemplatePath("dal/do"),
+                    javaModuleImplMainFilePath("dal/dataobject/${table.businessName}/${table.className}DO"))
+            .put(easygoJavaTemplatePath("dal/mapper"),
+                    javaModuleImplMainFilePath("dal/mysql/${table.businessName}/${table.className}Mapper"))
+            .put(easygoJavaTemplatePath("dal/mapper.xml"), mapperXmlFilePath())
+            .put(easygoJavaTemplatePath("service/serviceImpl"),
+                    javaModuleImplMainFilePath("service/${table.businessName}/${table.className}ServiceImpl"))
+            .put(easygoJavaTemplatePath("service/service"),
+                    javaModuleImplMainFilePath("service/${table.businessName}/${table.className}Service"))
+            // easygo Java module-biz Test
+            .put(easygoJavaTemplatePath("test/serviceTest"),
                     javaModuleImplTestFilePath("service/${table.businessName}/${table.className}ServiceImplTest"))
             // Java module-api Main
             .put(javaTemplatePath("enums/errorcode"), javaModuleApiMainFilePath("enums/ErrorCodeConstants_手动操作"))
-            // Vue2
-            .put(vueTemplatePath("views/index.vue"),
-                    vueFilePath("views/${table.moduleName}/${classNameVar}/index.vue"))
-            .put(vueTemplatePath("api/api.js"),
-                    vueFilePath("api/${table.moduleName}/${classNameVar}.js"))
+//            // Vue2
+//            .put(vueTemplatePath("views/index.vue"),
+//                    vueFilePath("views/${table.moduleName}/${classNameVar}/index.vue"))
+//            .put(vueTemplatePath("api/api.js"),
+//                    vueFilePath("api/${table.moduleName}/${classNameVar}.js"))
             // Vue3
             .put(vue3TemplatePath("views/index.vue"),
                     vue3FilePath("views/${table.moduleName}/${classNameVar}/index.vue"))
@@ -142,7 +165,7 @@ public class CodegenEngine {
         globalBindingMap.put("OperateTypeEnumClassName", OperateTypeEnum.class.getName());
     }
 
-    public Map<String, String> execute(CodegenTableDO table, List<CodegenColumnRespVO> columns) {
+    public Map<String, String> execute(CodegenTableRespVO table, List<CodegenColumnRespVO> columns) {
         // 创建 bindingMap
         Map<String, Object> bindingMap = new HashMap<>(globalBindingMap);
         bindingMap.put("table", table);
@@ -182,7 +205,7 @@ public class CodegenEngine {
         filePath = StrUtil.replace(filePath, "${sceneEnum.prefixClass}", sceneEnum.getPrefixClass());
         filePath = StrUtil.replace(filePath, "${sceneEnum.basePackage}", sceneEnum.getBasePackage());
         // table 包含的字段
-        CodegenTableDO table = (CodegenTableDO) bindingMap.get("table");
+        CodegenTableRespVO table = (CodegenTableRespVO) bindingMap.get("table");
         filePath = StrUtil.replace(filePath, "${table.moduleName}", table.getModuleName());
         filePath = StrUtil.replace(filePath, "${table.businessName}", table.getBusinessName());
         filePath = StrUtil.replace(filePath, "${table.className}", table.getClassName());
@@ -191,6 +214,10 @@ public class CodegenEngine {
 
     private static String javaTemplatePath(String path) {
         return "codegen/java/" + path + ".vm";
+    }
+
+    private static String easygoJavaTemplatePath(String path) {
+        return "codegen/easygo_java/" + path + ".vm";
     }
 
     private static String myJavaTemplatePath(String path) {

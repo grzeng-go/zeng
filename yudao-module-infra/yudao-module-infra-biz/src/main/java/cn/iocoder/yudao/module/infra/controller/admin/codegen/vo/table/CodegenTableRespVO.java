@@ -25,4 +25,34 @@ public class CodegenTableRespVO extends CodegenTableBaseVO {
     @Schema(description = "更新时间", required = true)
     private LocalDateTime updateTime;
 
+    /**
+     * 子业务对象管理主表的字段名 首字母大写驼峰
+     */
+    private String upParentId;
+
+    /**
+     * 子业务对象管理主表的字段名
+     */
+    private String parentId;
+
+    /**
+     * 主表主键java类型
+     */
+    private String parentJavaType;
+
+    /**
+     * 主业务对象类名
+     */
+    private String parentClassName;
+
+    /**
+     * 主业务对象类名 首字母小写驼峰
+     */
+    private String lowParentClassName;
+
+    /**
+     * 是否子业务对象
+     */
+    private boolean subTable;
+
 }

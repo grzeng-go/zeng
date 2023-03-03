@@ -3,6 +3,8 @@ package ${basePackage}.module.${table.moduleName}.service.${table.businessName};
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 
 import java.util.*;
 import ${basePackage}.module.${table.moduleName}.controller.${sceneEnum.basePackage}.${table.businessName}.vo.*;
@@ -14,6 +16,13 @@ import ${basePackage}.module.${table.moduleName}.dal.mysql.${table.businessName}
 
 import static ${ServiceExceptionUtilClassName}.exception;
 import static ${basePackage}.module.${table.moduleName}.enums.ErrorCodeConstants.*;
+
+#foreach ($column in $columns)
+#if (${column.columnType} == "1" )## 子业务对象
+import ${basePackage}.module.${column.subModuleName}.controller.${column.subSceneEnum.basePackage}.${column.subBusinessName}.vo.*;
+import ${basePackage}.module.${column.subModuleName}.service.${column.subBusinessName}.${column.className}Service;
+#end
+#end
 
 /**
  * ${table.classComment} Service 实现类
@@ -27,11 +36,30 @@ public class ${table.className}ServiceImpl implements ${table.className}Service 
     @Resource
     private ${table.className}Mapper ${classNameVar}Mapper;
 
+#foreach ($column in $columns)
+    #if (${column.columnType} == "1" )## 子业务对象
+    @Resource
+    private ${column.className}Service ${column.lowClassName}Service;
+    #end
+#end
+
     @Override
     public ${primaryColumn.javaType} create${simpleClassName}(${sceneEnum.prefixClass}${table.className}CreateReqVO createReqVO) {
         // 插入
         ${table.className}DO ${classNameVar} = ${table.className}Convert.INSTANCE.convert(createReqVO);
         ${classNameVar}Mapper.insert(${classNameVar});
+
+    #foreach ($column in $columns)
+        #if (${column.columnType} == "1" )## 子业务对象
+        // 保存或更新${column.className}数据
+        List<${column.className}CreateReqVO> ${column.javaField} = createReqVO.get${column.upJavaField}();
+        if (CollectionUtils.isNotEmpty(${column.javaField})) {
+            ${column.javaField}.stream().forEach(sub -> sub.set${column.upParentId}(${classNameVar}.getId()));
+            ${column.lowClassName}Service.saveOrUpdate(${column.javaField});
+        }
+        #end
+    #end
+
         // 返回
         return ${classNameVar}.getId();
     }
@@ -43,6 +71,22 @@ public class ${table.className}ServiceImpl implements ${table.className}Service 
         // 更新
         ${table.className}DO updateObj = ${table.className}Convert.INSTANCE.convert(updateReqVO);
         ${classNameVar}Mapper.updateById(updateObj);
+
+    #foreach ($column in $columns)
+        #if (${column.columnType} == "1" )## 子业务对象
+        // 保存或更新${column.className}数据
+        List<${column.className}CreateReqVO> ${column.javaField} = updateReqVO.get${column.upJavaField}();
+        if (CollectionUtils.isNotEmpty(${column.javaField})) {
+            ${column.javaField}.stream().forEach(sub -> sub.set${column.upParentId}(updateObj.getId()));
+            ${column.lowClassName}Service.saveOrUpdate(${column.javaField});
+        }
+        // 删除子表${column.className}数据
+        List<${column.subPrimaryKeyColumn.javaType}> del${column.upJavaField}Ids = updateReqVO.getDel${column.upJavaField}Ids();
+        if (CollectionUtils.isNotEmpty(del${column.upJavaField}Ids)) {
+            ${column.lowClassName}Service.deleteBatch(del${column.upJavaField}Ids);
+        }
+        #end
+    #end
     }
 
     @Override
@@ -51,6 +95,13 @@ public class ${table.className}ServiceImpl implements ${table.className}Service 
         validate${simpleClassName}Exists(id);
         // 删除
         ${classNameVar}Mapper.deleteById(id);
+
+#foreach ($column in $columns)
+        #if (${column.columnType} == "1" )## 子业务对象
+        // 删除子业务对象${column.className}
+        ${column.lowClassName}Service.deleteBy${column.upParentId}(id);
+        #end
+#end
     }
 
     private void validate${simpleClassName}Exists(${primaryColumn.javaType} id) {
@@ -78,5 +129,34 @@ public class ${table.className}ServiceImpl implements ${table.className}Service 
     public List<${table.className}DO> get${simpleClassName}List(${sceneEnum.prefixClass}${table.className}ExportReqVO exportReqVO) {
         return ${classNameVar}Mapper.selectList(exportReqVO);
     }
+
+    @Override
+    public void saveOrUpdate(List<${table.className}CreateReqVO> createReqVOS) {
+        List<${table.className}DO> dos = ${table.className}Convert.INSTANCE.convertList03(createReqVOS);
+        ${classNameVar}Mapper.saveOrUpdateBatch(dos);
+    }
+
+    @Override
+    public void deleteBatch(List<${primaryColumn.javaType}> ids) {
+        if (CollectionUtils.isNotEmpty(ids)) {
+            ${classNameVar}Mapper.deleteBatchIds(ids);
+        }
+    }
+
+#if (${table.subTable})## 是否子业务对象
+
+    @Override
+    public void deleteBy${table.upParentId}(${table.parentJavaType} ${table.parentId}) {
+        ${classNameVar}Mapper.delete(new LambdaQueryWrapperX<${table.className}DO>().eq(${table.className}DO::get${table.upParentId}, ${table.parentId}));
+    }
+
+    @Override
+    public List<${table.className}DO> getBy${table.upParentId}(${table.parentJavaType} ${table.parentId}) {
+        return ${classNameVar}Mapper.selectList(new LambdaQueryWrapperX<${table.className}DO>()
+                .eqIfPresent(${table.className}DO::get${table.upParentId}, ${table.parentId})
+        );
+    }
+
+#end
 
 }

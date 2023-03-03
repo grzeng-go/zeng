@@ -25,7 +25,7 @@ import static ${DateUtilsClassName}.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 public class ${sceneEnum.prefixClass}${table.className}ExportReqVO {
 
 #foreach ($column in $columns)
-#if (${column.listOperation})##查询操作
+#if (${column.listOperation} && ${column.columnType} != "1")##查询操作，并且不为子业务对象
 #if (${column.listOperationCondition} == "BETWEEN")## 情况一，Between 的时候
     @Schema(description = "${column.columnComment}"#if ("$!column.example" != ""), example = "${column.example}"#end)
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)

@@ -175,4 +175,9 @@ public class CodegenColumnDO extends BaseDO {
      */
     private Integer gridIdx;
 
+    /**
+     * 子业务对象管理主表的字段名
+     */
+    private String parentId;
+
 }

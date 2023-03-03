@@ -7,10 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import uk.co.jemos.podam.api.PodamFactory;
 import uk.co.jemos.podam.api.PodamFactoryImpl;
-import uk.co.jemos.podam.common.AttributeStrategy;
 
-import javax.validation.constraints.Email;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -124,7 +121,8 @@ public class RandomUtils {
 
     @SafeVarargs
     public static <T> List<T> randomPojoList(Class<T> clazz, Consumer<T>... consumers) {
-        int size = RandomUtil.randomInt(1, RANDOM_COLLECTION_LENGTH);
+        // 测试子业务对象时，会有删除操作，需要至少生成2条数据
+        int size = RandomUtil.randomInt(2, RANDOM_COLLECTION_LENGTH);
         return Stream.iterate(0, i -> i).limit(size).map(o -> randomPojo(clazz, consumers))
                 .collect(Collectors.toList());
     }

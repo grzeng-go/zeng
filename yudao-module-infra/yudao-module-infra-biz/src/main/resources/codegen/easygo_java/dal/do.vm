@@ -29,7 +29,7 @@ import ${BaseDOClassName};
 public class ${table.className}DO extends BaseDO {
 
 #foreach ($column in $columns)
-#if (!${baseDOFields.contains(${column.javaField})})##排除 BaseDO 的字段
+#if (!${baseDOFields.contains(${column.javaField})} && ${column.columnType} != "1")##排除 BaseDO 的字段，并且不为子业务对象
     /**
      * ${column.columnComment}
     #if ("$!column.dictType" != "")##处理枚举值

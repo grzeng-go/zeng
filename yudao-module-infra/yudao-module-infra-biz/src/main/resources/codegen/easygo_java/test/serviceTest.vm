@@ -19,6 +19,7 @@ import java.util.*;
 import java.time.LocalDateTime;
 
 import static cn.hutool.core.util.RandomUtil.*;
+import static cn.iocoder.yudao.framework.common.util.date.LocalDateTimeUtils.buildBetweenTime;
 import static ${basePackage}.module.${table.moduleName}.enums.ErrorCodeConstants.*;
 import static ${baseFrameworkPackage}.test.core.util.AssertUtils.*;
 import static ${baseFrameworkPackage}.test.core.util.RandomUtils.*;
@@ -26,6 +27,15 @@ import static ${ObjectUtilsClassName}.*;
 import static ${DateUtilsClassName}.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
+#foreach ($column in $columns)
+#if (${column.columnType} == "1" )## 子业务对象
+import ${basePackage}.module.${column.subModuleName}.controller.${column.subSceneEnum.basePackage}.${column.subBusinessName}.vo.*;
+import ${basePackage}.module.${column.subModuleName}.dal.dataobject.${column.subBusinessName}.${column.className}DO;
+import ${basePackage}.module.${column.subModuleName}.service.${column.subBusinessName}.*;
+import ${basePackage}.module.${column.subModuleName}.convert.${column.subBusinessName}.${column.className}Convert;
+#end
+#end
 
 ## 字段模板
 #macro(getPageCondition $VO)
@@ -64,11 +74,18 @@ import static org.mockito.Mockito.*;
 *
 * @author ${table.author}
 */
-@Import(${table.className}ServiceImpl.class)
+@Import({${table.className}ServiceImpl.class#foreach ($column in $columns)#if (${column.columnType} == "1" ), ${column.className}ServiceImpl.class#end#end})
 public class ${table.className}ServiceImplTest extends BaseDbUnitTest {
 
     @Resource
     private ${table.className}ServiceImpl ${classNameVar}Service;
+
+    #foreach ($column in $columns)
+    #if (${column.columnType} == "1" )
+    @Resource
+    private ${column.className}ServiceImpl ${column.lowClassName}Service;
+    #end
+    #end
 
     @Resource
     private ${table.className}Mapper ${classNameVar}Mapper;
@@ -76,7 +93,13 @@ public class ${table.className}ServiceImplTest extends BaseDbUnitTest {
     @Test
     public void testCreate${simpleClassName}_success() {
         // 准备参数
-        ${sceneEnum.prefixClass}${table.className}CreateReqVO reqVO = randomPojo(${sceneEnum.prefixClass}${table.className}CreateReqVO.class);
+        ${sceneEnum.prefixClass}${table.className}CreateReqVO reqVO = randomPojo(${sceneEnum.prefixClass}${table.className}CreateReqVO.class, createReqVO -> {
+            #foreach ($column in $columns)
+            #if (${column.columnType} == "1" )## 子业务对象
+            createReqVO.set${column.upJavaField}(randomPojoList(${column.className}CreateReqVO.class));
+            #end
+            #end
+        });
 
         // 调用
         ${primaryColumn.javaType} ${classNameVar}Id = ${classNameVar}Service.create${simpleClassName}(reqVO);
@@ -84,17 +107,51 @@ public class ${table.className}ServiceImplTest extends BaseDbUnitTest {
         assertNotNull(${classNameVar}Id);
         // 校验记录的属性是否正确
         ${table.className}DO ${classNameVar} = ${classNameVar}Mapper.selectById(${classNameVar}Id);
-        assertPojoEquals(reqVO, ${classNameVar});
+        assertPojoEquals(reqVO, ${classNameVar}, "id");
+
+        #foreach ($column in $columns)
+        #if (${column.columnType} == "1" )## 子业务对象
+        // 校验子业务对象属性是否正确
+        List<${column.className}DO> ${column.lowClassName}DO = ${column.lowClassName}Service.getBy${column.upParentId}(${classNameVar}Id);
+        assertCollectionPojoEquals(${column.className}Convert.INSTANCE.convertList03(reqVO.get${column.upJavaField}()), ${column.lowClassName}DO, (o1, o2) -> {
+            assertNotNull(o1);
+            assertNotNull(o2);
+            return o1.getId().compareTo(o2.getId());
+        }, "id", "createTime", "updateTime", "creator", "updater", "deleted");
+        #end
+        #end
     }
 
     @Test
     public void testUpdate${simpleClassName}_success() {
         // mock 数据
-        ${table.className}DO db${simpleClassName} = randomPojo(${table.className}DO.class);
-        ${classNameVar}Mapper.insert(db${simpleClassName});// @Sql: 先插入出一条存在的数据
+       // ${table.className}DO db${simpleClassName} = randomPojo(${table.className}DO.class);
+       // ${classNameVar}Mapper.insert(db${simpleClassName});// @Sql: 先插入出一条存在的数据
+        // mock 数据
+        ${sceneEnum.prefixClass}${table.className}CreateReqVO mockData = randomPojo(${sceneEnum.prefixClass}${table.className}CreateReqVO.class, createReqVO -> {
+            #foreach ($column in $columns)
+            #if (${column.columnType} == "1" )## 子业务对象
+            createReqVO.set${column.upJavaField}(randomPojoList(${column.className}CreateReqVO.class));
+            #end
+            #end
+        });
+        // 调用
+        ${primaryColumn.javaType} ${classNameVar}Id = ${classNameVar}Service.create${simpleClassName}(mockData);
         // 准备参数
         ${sceneEnum.prefixClass}${table.className}UpdateReqVO reqVO = randomPojo(${sceneEnum.prefixClass}${table.className}UpdateReqVO.class, o -> {
-            o.setId(db${simpleClassName}.getId()); // 设置更新的 ID
+            o.setId(${classNameVar}Id); // 设置更新的 ID
+
+            #foreach ($column in $columns)
+            #if (${column.columnType} == "1" )## 子业务对象
+            List<${column.className}CreateReqVO> ${column.javaField} = mockData.get${column.upJavaField}();
+            ${column.className}CreateReqVO remove${column.upJavaField} = ${column.javaField}.remove(0);
+            List<${column.subPrimaryKeyColumn.javaType}> del${column.upJavaField}Ids = new ArrayList<>();
+            del${column.upJavaField}Ids.add(remove${column.upJavaField}.getId());
+            ${column.javaField}.get(0).setName("update");
+            o.set${column.upJavaField}(${column.javaField});
+            o.setDel${column.upJavaField}Ids(del${column.upJavaField}Ids);
+            #end
+            #end
         });
 
         // 调用
@@ -102,6 +159,18 @@ public class ${table.className}ServiceImplTest extends BaseDbUnitTest {
         // 校验是否更新正确
         ${table.className}DO ${classNameVar} = ${classNameVar}Mapper.selectById(reqVO.getId()); // 获取最新的
         assertPojoEquals(reqVO, ${classNameVar});
+
+        #foreach ($column in $columns)
+        #if (${column.columnType} == "1" )## 子业务对象
+        // 校验子业务对象属性是否正确
+        List<${column.className}DO> ${column.lowClassName}DO = ${column.lowClassName}Service.getBy${column.upParentId}(${classNameVar}Id);
+        assertCollectionPojoEquals(${column.className}Convert.INSTANCE.convertList03(reqVO.get${column.upJavaField}()), ${column.lowClassName}DO, (o1, o2) -> {
+            assertNotNull(o1);
+            assertNotNull(o2);
+            return o1.getId().compareTo(o2.getId());
+        }, "id", "createTime", "updateTime", "creator", "updater", "deleted");
+        #end
+        #end
     }
 
     @Test

@@ -67,4 +67,34 @@ public interface ${table.className}Service {
      */
     List<${table.className}DO> get${simpleClassName}List(${sceneEnum.prefixClass}${table.className}ExportReqVO exportReqVO);
 
+    /**
+     * ${table.classComment}批量保存或更新
+     * @param createReqVOS
+     */
+    void saveOrUpdate(@Valid List<${table.className}CreateReqVO> createReqVOS);
+
+    /**
+     * 批量删除
+     * @param ids
+     */
+    void deleteBatch(List<${primaryColumn.javaType}> ids);
+
+#if (${table.subTable})## 是否子业务对象
+
+    /**
+     * 根据${table.parentClassName}主键删除业务对象属性
+     *
+     * @param ${table.parentId} 编号
+     */
+    void deleteBy${table.upParentId}(${table.parentJavaType} ${table.parentId});
+
+    /**
+     * 根据${table.parentClassName}主键获取业务对象属性列表
+     * @param ${table.parentId}
+     * @return
+     */
+    List<${table.className}DO> getBy${table.upParentId}(${table.parentJavaType} ${table.parentId});
+
+#end
+
 }

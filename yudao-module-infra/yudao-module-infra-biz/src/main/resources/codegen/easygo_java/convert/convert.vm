@@ -31,4 +31,6 @@ public interface ${table.className}Convert {
 
     List<${sceneEnum.prefixClass}${table.className}ExcelVO> convertList02(List<${table.className}DO> list);
 
+    List<${table.className}DO> convertList03(List<${sceneEnum.prefixClass}${table.className}CreateReqVO> list);
+
 }

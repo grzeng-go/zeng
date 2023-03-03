@@ -9,10 +9,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.function.Executable;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * 单元测试，assert 断言工具类
@@ -53,6 +53,38 @@ public class AssertUtils {
                     String.format("Field(%s) 不匹配", expectedField.getName())
             );
         });
+    }
+
+    /**
+     * 对比集合中的数据是否一致，需传入排序方法
+     * @param expected
+     * @param actual
+     * @param comparator
+     * @param ignoreFields
+     * @param <T>
+     */
+    public static <T> void assertCollectionPojoEquals(Collection<T> expected, Collection<T> actual, Comparator<? super T> comparator, String... ignoreFields) {
+        if (expected == actual) {
+            return;
+        }
+        assertNotEmpty(expected);
+        assertNotEmpty(actual);
+
+        int expectedSize = expected.size();
+        int actualSize = actual.size();
+        assertEquals(true, expectedSize == actualSize, "集合数据大小不一致");
+
+        List<T> expectedList = expected.stream().sorted(comparator).collect(Collectors.toList());
+        List<T> actualList = actual.stream().sorted(comparator).collect(Collectors.toList());
+
+        for (int i = 0; i < expectedSize; i++) {
+            assertPojoEquals(expectedList.get(i), actualList.get(i), ignoreFields);
+        }
+    }
+
+    public static <T> void assertNotEmpty(Collection<T> actual) {
+        assertNotNull(actual);
+        assertEquals(false, actual.isEmpty(), "集合数据为空");
     }
 
     /**

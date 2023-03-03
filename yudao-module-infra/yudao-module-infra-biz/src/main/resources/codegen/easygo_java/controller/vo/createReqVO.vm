@@ -23,8 +23,11 @@ public class ${sceneEnum.prefixClass}${table.className}CreateReqVO extends ${sce
 
 #foreach ($column in $columns)
 #if (${column.createOperation} && (!${column.updateOperation} || !${column.listOperationResult}))##不是通用字段
-    #parse("codegen/java/controller/vo/_column.vm")
-
+    #parse("codegen/easygo_java/controller/vo/_column.vm")
+#end
+#if (${column.primaryKey})## 主键
+    @Schema(description = "${column.columnComment}"#if (!${column.nullable}), required = true#end#if ("$!column.example" != ""), example = "${column.example}"#end)
+    private ${column.javaType} ${column.javaField};
 #end
 #end
 }
