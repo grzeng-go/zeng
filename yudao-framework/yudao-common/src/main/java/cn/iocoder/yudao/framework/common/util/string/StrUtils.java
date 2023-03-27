@@ -45,4 +45,39 @@ public class StrUtils {
         return Arrays.stream(longs).boxed().collect(Collectors.toList());
     }
 
+    /**
+     * 替换字符串中的子字符串
+     *
+     * @param input 输入字符串
+     * @param startIndices 开始位置
+     * @param endIndices 结束位置
+     * @param replacements 替换字符串
+     * @return 替换后的字符串
+     */
+    public static String replaceSubstrings(String input, int[] startIndices, int[] endIndices, String[] replacements) {
+        // Check that the number of start indices, end indices, and replacements are equal.
+        if (startIndices.length != endIndices.length || endIndices.length != replacements.length) {
+            throw new IllegalArgumentException("Invalid number of start indices, end indices, or replacements.");
+        }
+
+        // Check that all start and end positions are within the bounds of the input string.
+        for (int i = 0; i < startIndices.length; i++) {
+            if (startIndices[i] < 0 || endIndices[i] > input.length() || startIndices[i] >= endIndices[i]) {
+                throw new IllegalArgumentException("Invalid start or end position.");
+            }
+        }
+
+        // Construct the new string with the replaced substrings.
+        StringBuilder builder = new StringBuilder();
+        int lastIndex = 0;
+        for (int i = 0; i < startIndices.length; i++) {
+            builder.append(input.substring(lastIndex, startIndices[i]));
+            builder.append(replacements[i]);
+            lastIndex = endIndices[i];
+        }
+        builder.append(input.substring(lastIndex));
+
+        return builder.toString();
+    }
+
 }
